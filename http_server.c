@@ -97,57 +97,45 @@ struct http_request {
 
 static int
 http_server_recv (struct socket *sock, char *buf, size_t size) {
-	mm_segment_t oldfs;
-	struct iovec iov = {
+	struct kvec iov = {
 		.iov_base = (void *)buf,
 		.iov_len = size
 	};
 	struct msghdr msg = {
 		.msg_name = 0,
 		.msg_namelen = 0,
-		.msg_iov = &iov,
-		.msg_iovlen = 1,
 		.msg_control = NULL,
 		.msg_controllen = 0,
 		.msg_flags = 0
 	};
 	int length = 0;
 
-	oldfs = get_fs();
-	set_fs(KERNEL_DS);
-	length = sock_recvmsg(sock, &msg, size, msg.msg_flags);
-	set_fs(oldfs);
+	length = kernel_recvmsg(sock, &msg, &iov, 1, size, msg.msg_flags);
 	return length;
 }
 
 static int
 http_server_send (struct socket *sock, const char *buf, size_t size) {
-	mm_segment_t oldfs;
-	struct iovec iov;
+	struct kvec iov;
 	struct msghdr msg = {
 		.msg_name = NULL,
 		.msg_namelen = 0,
-		.msg_iov = &iov,
-		.msg_iovlen = 1,
 		.msg_control = NULL,
 		.msg_controllen = 0,
 		.msg_flags = 0
 	};
 	int length, done = 0;
 
-	oldfs = get_fs();
-	set_fs(KERNEL_DS);
 	while (done < size) {
 		iov.iov_base = (void *)((char *)buf + done);
 		iov.iov_len = size - done;
-		length = sock_sendmsg(sock, &msg, iov.iov_len);
+		length = kernel_sendmsg(sock, &msg, &iov, 1, iov.iov_len);
 		if (length < 0) {
 			printk(KERN_ERR MODULE_NAME ": write error: %d\n", length);
 			break;
 		}
 		done += length;
 	}
-	set_fs(oldfs);
 	return done;
 }
 

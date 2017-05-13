@@ -32,9 +32,9 @@ open_listen_socket (ushort port, ushort backlog, struct socket **res) {
 	int err, opt = 1;
 	struct sockaddr_in s;
 
-	err = sock_create_kern(PF_INET, SOCK_STREAM, IPPROTO_TCP, &sock);
+	err = sock_create(PF_INET, SOCK_STREAM, IPPROTO_TCP, &sock);
 	if (err < 0) {
-		printk(KERN_ERR MODULE_NAME ": sock_create_kern() failure, err=%d\n", err);
+		printk(KERN_ERR MODULE_NAME ": sock_create() failure, err=%d\n", err);
 		return err;
 	}
 	opt = 1;
